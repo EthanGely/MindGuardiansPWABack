@@ -1,0 +1,52 @@
+import express from 'express';
+import { createServer } from 'node:http';
+import cors from 'cors';
+import { Server } from 'socket.io';
+import db from './db.js';
+
+
+const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+app.use(cors());
+
+app.get('/', (req, res) => {
+    console.log("begin")
+    try {
+        db.query('SELECT * FROM Users', (err, res) => {
+            if (err) {
+                console.log('Error querying database: ', err);
+                return;
+            }
+            console.log('Query result: ', res);
+            res.send(res);
+        })
+    } catch (err) {
+        console.log('Error: ', err);
+    }
+});
+
+io.on('connection', (socket) => {
+
+    socket.on('disconnect', () => {
+        
+    });
+
+    socket.on('login', (username, password) => {
+        const result = handleLogin();
+    });
+});
+
+function handleLogin(username, password) {
+    
+}
+
+server.listen(3000, () => {
+    console.log('server running at http://localhost:3000');
+});
