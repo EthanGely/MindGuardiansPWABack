@@ -1,3 +1,5 @@
+var Role = require('./role');
+
 class User {
     constructor(id, firstName, lastName, email, roleId, lang, fontSize, volume, birthDate, sex) {
       let _id = id;
@@ -29,6 +31,9 @@ class User {
     }
 
     //getRole() //Needs class Role
+    getRole() {
+      return new Role(this.getRoleId());
+    }
 
     getBirthDateFormatted() {
         const date = new Date(this.getBirthDate() * 1000);
