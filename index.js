@@ -1,52 +1,39 @@
-import express from 'express';
-import { createServer } from 'node:http';
-import cors from 'cors';
-import { Server } from 'socket.io';
-import db from './db.js';
+const express = require('express');
+const { createServer } = require('node:http');
+const cors = require('cors');
+const RouterDefault = require("./routes/routeDefault");
+const RouterAuth = require("./routes/routeAuth");
+const RouterUser = require("./routes/routeUser");
+const RouterRole = require("./routes/routeRole");
+const bodyParser = require("body-parser");
+
+var fs = require('fs');
+var https = require('https');
+var privateKey  = fs.readFileSync('/etc/apache2/private.key', 'utf8');
+var certificate = fs.readFileSync('/etc/apache2/certificate.crt', 'utf8');
+var credentials = {key: privateKey, cert: certificate};
 
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+var httpsServer = https.createServer(credentials, app);
+//const server = createServer(app);
 
+const port = 8443;
+
+app.use(express.json())
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true})); 
+app.use(require('body-parser').json())
 app.use(cors());
 
-app.get('/', (req, res) => {
-    console.log("begin")
-    try {
-        db.query('SELECT * FROM Users', (err, res) => {
-            if (err) {
-                console.log('Error querying database: ', err);
-                return;
-            }
-            console.log('Query result: ', res);
-            res.send(res);
-        })
-    } catch (err) {
-        console.log('Error: ', err);
-    }
-});
 
-io.on('connection', (socket) => {
+app.use('/', RouterDefault);
+app.use('/auth/', RouterAuth);
+app.use('/user/', RouterUser);
+app.use('/role/', RouterRole);
 
-    socket.on('disconnect', () => {
-        
-    });
 
-    socket.on('login', (username, password) => {
-        const result = handleLogin();
-    });
-});
 
-function handleLogin(username, password) {
-    
-}
-
-server.listen(3000, () => {
-    console.log('server running at http://localhost:3000');
+httpsServer.listen(port, () => {
+    console.log('server running on port :' + port);
 });
