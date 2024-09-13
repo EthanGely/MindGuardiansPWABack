@@ -1,10 +1,8 @@
 const express = require('express');
 const Controller = require('../controllers/controllerUser');
 
+const RouterUser = express.Router();
 
-const RouterDefault = express.Router();
+RouterUser.post('/getCurrent', Controller.getUser);
 
-RouterDefault.post('/get', Controller.getUser);
-
-
-module.exports = RouterDefault;
+module.exports = RouterUser;
