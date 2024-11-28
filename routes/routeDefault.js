@@ -5,5 +5,4 @@ const RouterDefault = express.Router();
 
 RouterDefault.get('/', Controller.default);
 
-
 module.exports = RouterDefault;

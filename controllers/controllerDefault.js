@@ -1,5 +1,5 @@
 module.exports = {
     default: function (req, res) {
-        res.send("IT WORKS");
-    }
+        res.send('IT WORKS');
+    },
 };

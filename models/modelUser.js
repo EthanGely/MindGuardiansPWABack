@@ -5,8 +5,12 @@ var db = require('../database');
 module.exports = {
     getUserById: function (callback, usermail) {
         // Requête SELECT pour sélectionner tous les utilisateurs
-        return query(callback, "SELECT * FROM Users WHERE USER_ID = " + usermail);
-    }
+        return query(callback, 'SELECT * FROM Users WHERE USER_ID = ' + usermail);
+    },
+
+    getUsersByRole: function (callback, USER_ROLE_ID) {
+        return query(callback, 'SELECT * FROM Users WHERE USER_ROLE_ID = ' + USER_ROLE_ID);
+    },
 };
 
 function query(callback, sqlQuery) {

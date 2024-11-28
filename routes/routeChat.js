@@ -9,5 +9,4 @@ RouterDefault.post('/createRoom', Controller.createRoom);
 RouterDefault.post('/getMessages', Controller.getMessages);
 RouterDefault.post('/postMessage', Controller.postMessage);
 
-
 module.exports = RouterDefault;

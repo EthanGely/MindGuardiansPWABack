@@ -7,5 +7,4 @@ RouterDefault.post('/login', Controller.login);
 RouterDefault.post('/signin', Controller.signin);
 RouterDefault.post('/checkToken', Controller.checkToken);
 
-
 module.exports = RouterDefault;
