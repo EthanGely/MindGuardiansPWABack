@@ -88,6 +88,11 @@ module.exports = {
         sql += ' AND AGN_DATEFIN > ' + currentTimestamp;
         return query(callback, sql);
     },
+
+    getAgendaType: function (callback, ID_AGENDA) {
+        sql = 'SELECT at.* FROM Agenda_Type at INNER JOIN Agenda a ON a.AGN_TYPE = at.AGT_ID WHERE a.ID_AGENDA = ' + ID_AGENDA;
+        return query(callback, sql);
+    },
 };
 
 function query(callback, sqlQuery) {

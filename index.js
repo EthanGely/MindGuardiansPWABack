@@ -1,5 +1,8 @@
 //___________________________________________________________//
 /////////////////////////-- IMPORTS --/////////////////////////
+// Sentry
+require("./instrument.js");
+const Sentry = require("@sentry/node");
 // Base imports
 const express = require('express');
 const { createServer } = require('node:http');
@@ -19,6 +22,12 @@ const RouterRole = require('./routes/routeRole');
 const RouterChat = require('./routes/routeChat');
 const RouterAgenda = require('./routes/routeAgenda');
 const RouterAgendaValidation = require('./routes/routeAgendaValidation');
+const RouterPushNotif = require('./routes/routePushNotif');
+
+//___________________________________________________________//
+/////////////////////////-- LOGS SETTINGS --/////////////////////////
+// process.env.SILENT mode
+const minimumLog = true;
 
 //_________________________________________________________________//
 /////////////////////////-- SERVER CONFIG --/////////////////////////
@@ -58,6 +67,10 @@ app.use(cors());
 
 //__________________________________________________________//
 /////////////////////////-- ROUTES --/////////////////////////
+app.get('/index.ico', function (req, res) {
+    res.sendFile('index.ico', { root: __dirname });
+});
+
 // Default route -- public
 app.use('/', RouterDefault);
 
@@ -73,29 +86,28 @@ app.use('/user', RouterUser);
 // Role route -- public ?
 app.use('/role', RouterRole);
 
+// Chat route -- private
 app.use('/chat', (req, res, next) => {
     authMiddleware(req, res, next);
 });
-
 app.use('/chat', RouterChat);
 
+// Agenda route -- private
 app.use('/agenda', (req, res, next) => {
     authMiddleware(req, res, next);
 });
-
 app.use('/agenda', RouterAgenda);
 
+// AgendaValidation route -- private
 app.use('/agendaValidation', (req, res, next) => {
     authMiddleware(req, res, next);
 });
-
 app.use('/agendaValidation', RouterAgendaValidation);
 
-//______________________________________________________________________//
-/////////////////////////////-- NOTIFICATION --///////////////////////////
-app.get('/vpk', function (req, res) {
-    res.send(process.env.PUBLICKEYPUSH);
+app.use('/pushNotif', (req, res, next) => {
+    authMiddleware(req, res, next);
 });
+app.use('/pushNotif', RouterPushNotif);
 
 //_____________________________________________________________//
 /////////////////////////-- UTILITIES --/////////////////////////
@@ -109,15 +121,21 @@ function authMiddleware(req, res, next) {
                 req.newToken = generateJWT(decodedToken.userId);
                 next();
             } else {
-                console.log('Could not decode token');
+                if (process.env.SILENT === 'false') {
+                    console.log('Could not decode token');
+                }
                 res.status(500).json('Token expired');
             }
         } else {
-            console.log('No token found');
+            if (process.env.SILENT === 'false') {
+                console.log('No token found');
+            }
             res.sendStatus(400);
         }
     } else {
-        console.log('Issue in request for token');
+        if (process.env.SILENT === 'false') {
+            console.log('Issue in request for token');
+        }
         res.sendStatus(400);
     }
 }
@@ -126,13 +144,17 @@ function authenticateToken(completeToken) {
     const token = completeToken && completeToken.split(' ')[1];
 
     if (token == null) {
-        console.log('Error reading token : NO TOKEN');
+        if (process.env.SILENT === 'false') {
+            console.log('Error reading token : NO TOKEN');
+        }
         return false;
     }
 
     return jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
         if (err) {
-            console.log('Error checking token :', err);
+            if (process.env.SILENT === 'false') {
+                console.log('Error checking token :', err);
+            }
             return false;
         }
         return decoded;
@@ -154,7 +176,9 @@ io.on('connection', (socket) => {
 
             if (userId) {
                 const messages = db.query('SELECT c.CHAT_LIBELLE, cm.ID_USER, cm.MESSAGE, cm.MESSAGE_TIME, u.USER_FIRSTNAME, u.USER_LASTNAME FROM Chat c INNER JOIN Chat_User cu ON c.ID_CHAT = cu.ID_CHAT INNER JOIN Chat_Message cm ON c.ID_CHAT = cm.ID_CHAT INNER JOIN Users u ON cm.ID_USER = u.USER_ID WHERE c.ID_CHAT = ' + roomId + ' AND cu.ID_USER = ' + userId + ' ORDER BY cm.MESSAGE_TIME ASC');
-                console.log(messages);
+                if (process.env.SILENT === 'false') {
+                    console.log(messages);
+                }
             }
         }
     });
@@ -179,10 +203,16 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {});
 });
 
+Sentry.setupExpressErrorHandler(app);
+
 //_________________________________________________________________//
 /////////////////////////-- SERVER START --/////////////////////////
 httpsServer.listen(port, () => {
-    console.log('server running on port :' + port);
+    if (process.env.SILENT === 'false') {
+        console.log('server running on port :' + port);
+    } else if (minimumLog) {
+        console.log('Running');
+    }
 });
 
 //________________________________________________________//

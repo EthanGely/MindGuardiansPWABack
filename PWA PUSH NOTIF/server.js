@@ -14,6 +14,7 @@ dotenv.config();
 // Certificates
 var fs = require('fs');
 var https = require('https');
+const { log } = require('node:console');
 var privateKey = fs.readFileSync('/etc/apache2/private.key', 'utf8');
 var certificate = fs.readFileSync('/etc/apache2/certificate.crt', 'utf8');
 var credentials = { key: privateKey, cert: certificate };
@@ -45,6 +46,10 @@ app.get('/index.ico', function (req, res) {
     res.sendFile('index.ico', { root: __dirname });
 });
 
+app.get('/icon.ico', function (req, res) {
+    console.log('icon.ico');
+    res.sendFile('icon.ico', { root: __dirname });
+});
 app.get('/index.js', function (req, res) {
     res.sendFile('index.js', { root: __dirname });
 });
@@ -63,6 +68,15 @@ app.get('/vapidPublicKey', function (req, res) {
 
 app.post('/register', function (req, res) {
     // A real world application would store the subscription info.
+    const sub = req.body.subscription;
+    const stingSub = JSON.stringify(sub);
+    console.log('---------------------');
+    console.log(sub);
+    console.log('---------------------');
+    console.log(stingSub);
+    console.log('---------------------');
+    console.log(JSON.parse(stingSub));
+
     res.sendStatus(201);
 });
 
@@ -70,7 +84,7 @@ app.post('/sendNotification', function (req, res) {
     const subscription = req.body.subscription;
     const title = req.body.title;
     const payload = req.body.payload;
-    const image = '/index.ico';
+    const image = '/icon.ico';
 
     const response = JSON.stringify({ title: title, payload: payload, image: image });
 
@@ -80,12 +94,11 @@ app.post('/sendNotification', function (req, res) {
 
     webPush
         .sendNotification(subscription, response, options)
-        .then(function () {
-            res.sendStatus(201);
+        .then(function (result) {
+            console.log('Notification sent successfully:', result);
         })
         .catch(function (error) {
-            console.log(error);
-            res.sendStatus(500);
+            console.log('Error sending notification:', error);
         });
 });
 

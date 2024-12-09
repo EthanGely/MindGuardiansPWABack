@@ -6,6 +6,9 @@ const jwt = require('jsonwebtoken');
 
 module.exports = {
     login: function (req, res) {
+        if (process.env.SILENT === 'false') {
+            console.log('Trying to log in');
+        }
         const usermail = req.body.usermail;
         const password = sha256(req.body.password ? req.body.password : '');
 
@@ -17,7 +20,10 @@ module.exports = {
                     if (password == user[0].USER_PASSWORD) {
                         roleModel.getRoleById(function (err, role) {
                             if (!err && role[0]) {
-                                return res.json({
+                                if (process.env.SILENT === 'false') {
+                                    console.log('User logged in');
+                                }
+                                return res.status(200).json({
                                     jwt: generateJWT(user[0].USER_ID),
                                     location: role[0].ROLE_DEFAULT_LOCATION,
                                 });

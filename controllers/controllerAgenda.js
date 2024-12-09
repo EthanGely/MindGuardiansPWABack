@@ -7,7 +7,9 @@ module.exports = {
             agendaModel.getAgendasForUser(
                 function (err, messages) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json(messages);
@@ -27,7 +29,9 @@ module.exports = {
             agendaModel.getAgenda(
                 function (err, messages) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json(messages);
@@ -46,7 +50,9 @@ module.exports = {
             agendaModel.createAgenda(
                 function (err, message) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json(message.insertId);
@@ -56,7 +62,9 @@ module.exports = {
                 req.body.agendaData
             );
         } else {
-            console.log('missing attributes in query');
+            if (process.env.SILENT === 'false') {
+                console.log('missing attributes in query');
+            }
             res.sendStatus(500);
         }
     },
@@ -66,7 +74,9 @@ module.exports = {
             agendaModel.deleteAgenda(
                 function (err, result) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json('Deleted Agenda : ' + result.affectedRows);
@@ -85,7 +95,9 @@ module.exports = {
             agendaModel.updateAgenda(
                 function (err, result) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json('Updated Agenda : ' + result.affectedRows);
@@ -96,7 +108,9 @@ module.exports = {
                 req.body.agendaData
             );
         } else {
-            console.log('missing attributes in query');
+            if (process.env.SILENT === 'false') {
+                console.log('missing attributes in query');
+            }
             res.sendStatus(500);
         }
     },

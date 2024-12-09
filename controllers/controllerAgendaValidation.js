@@ -7,7 +7,9 @@ module.exports = {
             agendaValidationModel.getAllAgendaValidationForUser(
                 function (err, messages) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json(messages);
@@ -27,7 +29,9 @@ module.exports = {
             agendaValidationModel.getAgendaValidation(
                 function (err, messages) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json(messages);
@@ -46,7 +50,9 @@ module.exports = {
             agendaValidationModel.createAgendaValidation(
                 function (err, result) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json(result.insertId);
@@ -57,7 +63,9 @@ module.exports = {
                 Date.now()
             );
         } else {
-            console.log('missing attributes in query');
+            if (process.env.SILENT === 'false') {
+                console.log('missing attributes in query');
+            }
             res.sendStatus(500);
         }
     },
@@ -66,7 +74,9 @@ module.exports = {
         if (req.body.ID_AGENDAVALIDATION) {
             agendaValidationModel.deleteAgendaValidation(function (err, result) {
                 if (err) {
-                    console.log(err);
+                    if (process.env.SILENT === 'false') {
+                        console.log(err);
+                    }
                     return res.sendStatus(500);
                 } else {
                     res.json('Deleted Agenda : ' + result.affectedRows);

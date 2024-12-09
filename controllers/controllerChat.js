@@ -6,7 +6,9 @@ module.exports = {
         if (req.userId) {
             chatModel.getRoomsForUser(function (err, chatRooms) {
                 if (err) {
-                    console.log(err);
+                    if (process.env.SILENT === 'false') {
+                        console.log(err);
+                    }
                     return res.sendStatus(500);
                 } else {
                     if (chatRooms) {
@@ -26,7 +28,9 @@ module.exports = {
             chatModel.createRoom(
                 function (err, success) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         if (success) {
@@ -49,7 +53,9 @@ module.exports = {
             chatModel.getMessages(
                 function (err, messages) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         return res.sendStatus(500);
                     } else {
                         res.json(messages);
@@ -68,7 +74,9 @@ module.exports = {
             chatModel.postMessage(
                 function (err, result) {
                     if (err) {
-                        console.log(err);
+                        if (process.env.SILENT === 'false') {
+                            console.log(err);
+                        }
                         res.sendStatus(500);
                     } else {
                         res.sendStatus(200);

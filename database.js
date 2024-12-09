@@ -13,8 +13,15 @@ let mysqlconnexion = mysql.createConnection({
     database: configDB['MindGuardians']['DATABASE'],
 });
 mysqlconnexion.connect((err) => {
-    if (!err) console.log('BDD connectée.');
-    else console.log('BDD connexion échouée \n Erreur: ' + JSON.stringify(err));
+    if (!err) {
+        if (process.env.SILENT === 'false') {
+            console.log('BDD connectée.');
+        }
+    } else {
+        if (process.env.SILENT === 'false') {
+            console.log('BDD connexion échouée \n Erreur: ' + JSON.stringify(err));
+        }
+    }
 });
 
 //Exportation du module de connexion à la bdd

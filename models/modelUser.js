@@ -11,6 +11,14 @@ module.exports = {
     getUsersByRole: function (callback, USER_ROLE_ID) {
         return query(callback, 'SELECT * FROM Users WHERE USER_ROLE_ID = ' + USER_ROLE_ID);
     },
+
+    setUserPushSubscription: function (callback, userId, subscription) {
+        return query(callback, "UPDATE Users SET USER_PUSH_SUBSCRIPTION = '" + subscription + "' WHERE USER_ID = " + userId);
+    },
+
+    removeUserPushSubscription: function (callback, userId) {
+        return query(callback, 'UPDATE Users SET USER_PUSH_SUBSCRIPTION = NULL WHERE USER_ID = ' + userId);
+    },
 };
 
 function query(callback, sqlQuery) {
