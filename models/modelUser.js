@@ -1,34 +1,29 @@
 // Importation de la connexion à la base de données
-var db = require('../database');
+var query = require('../database');
 
 // Exportation du modèle MySQL (requêtes...)
 module.exports = {
-    getUserById: function (callback, usermail) {
-        // Requête SELECT pour sélectionner tous les utilisateurs
-        return query(callback, 'SELECT * FROM Users WHERE USER_ID = ' + usermail);
+    getUserById: async function (usermail) {
+        return await query('SELECT * FROM Users WHERE USER_ID = ?', [usermail]);
     },
 
-    getUsersByRole: function (callback, USER_ROLE_ID) {
-        return query(callback, 'SELECT * FROM Users WHERE USER_ROLE_ID = ' + USER_ROLE_ID);
+    getUsersByRole: async function (USER_ROLE_ID) {
+        return await query('SELECT * FROM Users WHERE USER_ROLE_ID = ?', [USER_ROLE_ID]);
     },
 
-    setUserPushSubscription: function (callback, userId, subscription) {
-        return query(callback, "UPDATE Users SET USER_PUSH_SUBSCRIPTION = '" + subscription + "' WHERE USER_ID = " + userId);
+    setUserPushSubscription: async function (userId, subscription) {
+        return await query("UPDATE Users SET USER_PUSH_SUBSCRIPTION = ? WHERE USER_ID = ?", [subscription, userId]);
     },
 
-    removeUserPushSubscription: function (callback, userId) {
-        return query(callback, 'UPDATE Users SET USER_PUSH_SUBSCRIPTION = NULL WHERE USER_ID = ' + userId);
+    removeUserPushSubscription: async function (userId) {
+        return await query('UPDATE Users SET USER_PUSH_SUBSCRIPTION = NULL WHERE USER_ID = ?', [userId]);
     },
+
+    getUsersForDoctor: async function (userId) {
+        return await query('SELECT u.* FROM Users as u INNER JOIN Lien_Patient as l ON u.USER_ID = l.ID_PATIENT WHERE l.ID_USERLIE = ? AND u.USER_ROLE_ID = 1 AND TYPE_LIENPATIENT = "LIEN_DOCTEUR"', [userId]);
+    },
+
+    getUserForDoctor: async function (userId, patientId) {
+        return await query('SELECT u.* FROM Users as u INNER JOIN Lien_Patient as l ON u.USER_ID = l.ID_PATIENT WHERE l.ID_USERLIE = ? AND u.USER_ROLE_ID = 1 AND TYPE_LIENPATIENT = "LIEN_DOCTEUR" AND u.USER_ID = ?', [userId, patientId]);
+    }
 };
-
-function query(callback, sqlQuery) {
-    db.query(sqlQuery, function (err, result) {
-        if (err) {
-            // En cas d'erreur, transmettez l'erreur au callback
-            return callback(err, null);
-        } else {
-            // En cas de succès, transmettez les résultats au callback
-            return callback(null, result);
-        }
-    });
-}

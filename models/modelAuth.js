@@ -1,39 +1,22 @@
 // Importation de la connexion à la base de données
-var db = require('../database');
+var query = require('../database');
 
 // Exportation du modèle MySQL (requêtes...)
 module.exports = {
-    getUser: function (callback, usermail) {
-        // Requête SELECT pour sélectionner tous les utilisateurs
-        return query(callback, "SELECT * FROM Users WHERE USER_MAIL = '" + usermail + "'");
+    getUser: async function (usermail) {
+        return await query("SELECT * FROM Users WHERE USER_MAIL = ?", [usermail]);
     },
 
-    createUser: function (callback, userData) {
-        let sql = "INSERT INTO Users (USER_MAIL, USER_FIRSTNAME, USER_LASTNAME, USER_PASSWORD, USER_ROLE_ID) VALUES ('" + userData.userMail + "', '" + userData.userFirstName + "', '" + userData.userLastName + "', '" + userData.userPassword + "', " + userData.userRoleId + ')';
-        if (userData.userRoleId == 1) {
-            sql = "INSERT INTO Users (USER_MAIL, USER_FIRSTNAME, USER_LASTNAME, USER_PASSWORD, USER_ROLE_ID, USER_FONTSIZE, USER_VOLUME, USER_BIRTH) VALUES ('" + userData.userMail + "', '" + userData.userFirstName + "', '" + userData.userLastName + "', '" + userData.userPassword + "', " + userData.userRoleId + ', ' + userData.userFontSize + ', ' + userData.userVolume + ', ' + userData.userAge + ')';
-        }
+    getUserById: async function (userId) {
+        return await query('SELECT * FROM Users WHERE USER_ID = ?', [userId]);
+    },
 
-        return db.query(sql, function (err, result) {
-            if (err) {
-                // En cas d'erreur, transmettez l'erreur au callback
-                return callback(err, null);
-            } else {
-                // En cas de succès, transmettez les résultats au callback
-                return query(callback, "SELECT USER_ID FROM Users WHERE USER_MAIL = '" + userData.userMail + "'");
-            }
-        });
+    createUser: async function (userData) {
+        if (userData.userRoleId == 1) {
+            let sql = 'INSERT INTO Users (USER_MAIL, USER_FIRSTNAME, USER_LASTNAME, USER_PASSWORD, USER_ROLE_ID, USER_SEXE, USER_FONTSIZE, USER_VOLUME, USER_BIRTH, USER_HEUREREVEIL, USER_HEURECOUCHER) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            return await query(sql, [userData.userMail, userData.userFirstName, userData.userLastName, userData.userPassword, userData.userRoleId, userData.userSexe, userData.userFontSize, userData.userVolume, userData.userBirth, userData.userHeureReveil, userData.userHeureCoucher]);
+        }
+        let sql = 'INSERT INTO Users (USER_MAIL, USER_FIRSTNAME, USER_LASTNAME, USER_PASSWORD, USER_ROLE_ID, USER_SEXE) VALUES (?, ?, ?, ?, ?, ?)';
+        return await query(sql, [userData.userMail, userData.userFirstName, userData.userLastName, userData.userPassword, userData.userRoleId, userData.userSexe]);
     },
 };
-
-function query(callback, sqlQuery) {
-    db.query(sqlQuery, function (err, result) {
-        if (err) {
-            // En cas d'erreur, transmettez l'erreur au callback
-            return callback(err, null);
-        } else {
-            // En cas de succès, transmettez les résultats au callback
-            return callback(null, result);
-        }
-    });
-}

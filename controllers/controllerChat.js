@@ -2,92 +2,43 @@
 var chatModel = require('../models/modelChat');
 
 module.exports = {
-    getRooms: function (req, res) {
+    getRooms: async function (req, res) {
         if (req.userId) {
-            chatModel.getRoomsForUser(function (err, chatRooms) {
-                if (err) {
-                    if (process.env.SILENT === 'false') {
-                        console.log(err);
-                    }
-                    return res.sendStatus(500);
-                } else {
-                    if (chatRooms) {
-                        res.json(chatRooms);
-                    } else {
-                        return res.status(403).json('NO ROOMS FOUND');
-                    }
-                }
-            }, req.userId);
-        } else {
-            res.sendStatus(500);
+            const rooms = await chatModel.getRoomsForUser(req.userId);
+            if (rooms) {
+                return res.json(rooms);
+            }
         }
+        res.sendStatus(500);
     },
 
-    createRoom: function (req, res) {
+    createRoom: async function (req, res) {
         if (req.userId && req.body.roomTitle) {
-            chatModel.createRoom(
-                function (err, success) {
-                    if (err) {
-                        if (process.env.SILENT === 'false') {
-                            console.log(err);
-                        }
-                        return res.sendStatus(500);
-                    } else {
-                        if (success) {
-                            res.json(success);
-                        } else {
-                            return res.status(403).json('ROOM CANNOT BE CREATED');
-                        }
-                    }
-                },
-                req.userId,
-                req.body.roomTitle
-            );
-        } else {
-            res.sendStatus(500);
+            const room = await chatModel.createRoom(req.userId, req.body.roomTitle);
+            if (room) {
+                return res.json(room);
+            }
         }
+        res.sendStatus(500);
     },
 
-    getMessages: function (req, res) {
+    getMessages: async function (req, res) {
         if (req.userId && req.body.roomId) {
-            chatModel.getMessages(
-                function (err, messages) {
-                    if (err) {
-                        if (process.env.SILENT === 'false') {
-                            console.log(err);
-                        }
-                        return res.sendStatus(500);
-                    } else {
-                        res.json(messages);
-                    }
-                },
-                req.userId,
-                req.body.roomId
-            );
-        } else {
-            res.sendStatus(500);
+            const messages = await chatModel.getMessages(req.userId, req.body.roomId);
+            if (messages) {
+                return res.json(messages);
+            }
         }
+        res.sendStatus(500);
     },
 
-    postMessage: function (req, res) {
+    postMessage: async function (req, res) {
         if (req.userId && req.body.roomId && req.body.message) {
-            chatModel.postMessage(
-                function (err, result) {
-                    if (err) {
-                        if (process.env.SILENT === 'false') {
-                            console.log(err);
-                        }
-                        res.sendStatus(500);
-                    } else {
-                        res.sendStatus(200);
-                    }
-                },
-                req.userId,
-                req.body.roomId,
-                req.body.message
-            );
-        } else {
-            res.sendStatus(500);
+            const message = await chatModel.postMessage(req.userId, req.body.roomId, req.body.message);
+            if (message) {
+                return res.sendStatus(200);
+            }
         }
+        res.sendStatus(500);
     },
 };

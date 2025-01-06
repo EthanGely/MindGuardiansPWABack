@@ -1,5 +1,5 @@
 // Importation de la connexion à la base de données
-var db = require('../database');
+var query = require('../database');
 
 // Exportation du modèle MySQL (requêtes...)
 module.exports = {
@@ -13,28 +13,42 @@ module.exports = {
      * @param {int} dateFin Unix timestamp in seconds
      * @returns Agendas
      */
-    getAgendasForUser: function (callback, userId, dateDebut = 0, dateFin = 0) {
-        sql = 'SELECT * FROM Agenda WHERE ID_USER = ' + userId;
+    getAgendasForUser: async function (userId, dateDebut = 0, dateFin = 0) {
+        sql = 'SELECT * FROM Agenda WHERE ID_USER = ?';
+        const params = [userId];
+        let condition = '';
         if (dateDebut) {
             let signe = dateDebut > 0 ? '<=' : '>=';
 
-            sql += ' AND AGN_DATEDEBUT ' + signe + ' ' + Math.abs(dateDebut);
+            condition += 'AGN_DATEDEBUT ' + signe + ' ?';
+            params.push(Math.abs(dateDebut));
         }
-
+        if (condition) {
+            condition = ' AND (' + condition;
+        }
+        let conditionFin = '';
         if (dateFin) {
             let signe = dateFin > 0 ? '<=' : '>=';
-            sql += ' AND AGN_DATEFIN ' + signe + ' ' + Math.abs(dateFin);
+            conditionFin += 'AGN_DATEFIN ' + signe + ' ?';
+            params.push(Math.abs(dateFin));
         }
 
-        return query(callback, sql);
+        if (conditionFin) {
+            if (condition) {
+                condition += ' OR ' + conditionFin + ')';
+            } else {
+                condition = ' AND ' + conditionFin;
+            }
+        }
+        return await query(sql + condition, params);
     },
 
-    getAgenda: function (callback, userId, ID_AGENDA) {
-        sql = 'SELECT * FROM Agenda WHERE ID_USER = ' + userId + ' AND ID_AGENDA = ' + ID_AGENDA;
-        return query(callback, sql);
+    getAgenda: async function (userId, ID_AGENDA) {
+        sql = 'SELECT * FROM Agenda WHERE ID_USER = ? AND ID_AGENDA = ?';
+        return await query(sql, [userId, ID_AGENDA]);
     },
 
-    createAgenda: function (callback, userId, agendaData) {
+    createAgenda: async function (userId, agendaData) {
         const sql = `INSERT INTO Agenda (
         ID_USER,
         AGN_TITLE,
@@ -47,62 +61,50 @@ module.exports = {
         AGN_VIBRATION,
         AGN_FLASH
         ) VALUES (
-        ${userId},
-        '${agendaData['AGN_TITLE']}',
-        ${agendaData['AGN_DATEDEBUT']},
-        ${agendaData['AGN_DATEFIN']},
-        ${agendaData['AGN_DATENOTIFICATION']},
-        '${agendaData['AGN_REPETITION']}',
-        '${agendaData['AGN_DESCRIPTION']}',
-        ${agendaData['AGN_NOMBREREPETITION']},
-        ${agendaData['AGN_VIBRATION']},
-        ${agendaData['AGN_FLASH']}
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?
         )`;
-        return query(callback, sql);
+        return await query(sql, [userId, agendaData['AGN_TITLE'], agendaData['AGN_DATEDEBUT'], agendaData['AGN_DATEFIN'], agendaData['AGN_DATENOTIFICATION'], agendaData['AGN_REPETITION'], agendaData['AGN_DESCRIPTION'], agendaData['AGN_NOMBREREPETITION'], agendaData['AGN_VIBRATION'], agendaData['AGN_FLASH']]);
     },
 
-    deleteAgenda: function (callback, userId, ID_AGENDA) {
-        const sql = 'DELETE FROM Agenda WHERE ID_AGENDA=' + ID_AGENDA + ' AND ID_USER=' + userId;
-        return query(callback, sql);
+    deleteAgenda: async function (userId, ID_AGENDA) {
+        const sql = 'DELETE FROM Agenda WHERE ID_AGENDA=? AND ID_USER=?';
+        return await query(sql, [ID_AGENDA, userId]);
     },
 
-    updateAgenda: function (callback, userId, ID_AGENDA, agendaData) {
+    updateAgenda: async function (userId, ID_AGENDA, agendaData) {
         const sql = `UPDATE Agenda SET
-            AGN_TITLE='${agendaData['AGN_TITLE']}',
-            AGN_DATEDEBUT='${agendaData['AGN_DATEDEBUT']}',
-            AGN_DATEFIN='${agendaData['AGN_DATEFIN']}',
-            AGN_DATENOTIFICATION='${agendaData['AGN_DATENOTIFICATION']}',
-            AGN_REPETITION='${agendaData['AGN_REPETITION']}',
-            AGN_DESCRIPTION='${agendaData['AGN_DESCRIPTION']}',
-            AGN_NOMBREREPETITION='${agendaData['AGN_NOMBREREPETITION']}',
-            AGN_VIBRATION='${agendaData['AGN_VIBRATION']}',
-            AGN_FLASH='${agendaData['AGN_FLASH']}'
-            WHERE ID_AGENDA = ${ID_AGENDA} AND ID_USER = ${userId}`;
-        return query(callback, sql);
+            AGN_TITLE=?,
+            AGN_DATEDEBUT=?,
+            AGN_DATEFIN=?,
+            AGN_DATENOTIFICATION=?,
+            AGN_REPETITION=?,
+            AGN_DESCRIPTION=?,
+            AGN_NOMBREREPETITION=?,
+            AGN_VIBRATION=?,
+            AGN_FLASH=?
+            WHERE ID_AGENDA = ? AND ID_USER = ?`;
+        return await query(sql, [agendaData['AGN_TITLE'], agendaData['AGN_DATEDEBUT'], agendaData['AGN_DATEFIN'], agendaData['AGN_DATENOTIFICATION'], agendaData['AGN_REPETITION'], agendaData['AGN_DESCRIPTION'], agendaData['AGN_NOMBREREPETITION'], agendaData['AGN_VIBRATION'], agendaData['AGN_FLASH'], ID_AGENDA, userId]);
     },
 
-    getAllAgendas: function (callback, userId, ID_AGENDA) {
+    getAllAgendas: async function () {
         const currentTimestamp = Date.now * 1000;
         sql = 'SELECT * FROM Agenda WHERE';
         sql += ' AGN_DATEDEBUT <= ' + currentTimestamp;
         sql += ' AND AGN_DATEFIN > ' + currentTimestamp;
-        return query(callback, sql);
+        return await query(sql);
     },
 
-    getAgendaType: function (callback, ID_AGENDA) {
-        sql = 'SELECT at.* FROM Agenda_Type at INNER JOIN Agenda a ON a.AGN_TYPE = at.AGT_ID WHERE a.ID_AGENDA = ' + ID_AGENDA;
-        return query(callback, sql);
+    getAgendaType: function (ID_AGENDA) {
+        sql = 'SELECT at.* FROM Agenda_Type at INNER JOIN Agenda a ON a.AGN_TYPE = at.AGT_ID WHERE a.ID_AGENDA = ?';
+        return query(sql, [ID_AGENDA]);
     },
 };
-
-function query(callback, sqlQuery) {
-    db.query(sqlQuery, function (err, result) {
-        if (err) {
-            // En cas d'erreur, transmettez l'erreur au callback
-            return callback(err, null);
-        } else {
-            // En cas de succès, transmettez les résultats au callback
-            return callback(null, result);
-        }
-    });
-}

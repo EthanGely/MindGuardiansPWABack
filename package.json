@@ -22,12 +22,15 @@
         "https": "^1.0.0",
         "iniparser": "^1.0.5",
         "jsonwebtoken": "^9.0.2",
+        "multer": "^1.4.5-lts.1",
         "mysql": "^2.18.1",
         "node-cron": "^3.0.3",
+        "path": "^0.12.7",
         "sequelize": "^6.37.2",
         "sha256": "^0.2.0",
         "socket.io": "^4.7.2",
         "sqlite3": "^5.1.7",
+        "util": "^0.12.5",
         "web-push": "^3.6.7"
     }
 }

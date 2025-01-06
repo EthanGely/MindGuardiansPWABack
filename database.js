@@ -1,18 +1,20 @@
-//Importaion du module mysql et iniparser
+// Imports
 const mysql = require('mysql');
 const iniparser = require('iniparser');
+const util = require('util');
 
-//Convertion du fichier DB.ini en objet javascript
+// Convertion du fichier DB.ini en objet javascript
 let configDB = iniparser.parseSync('./DB.ini');
 
-//Création de la connexion à la bdd
-let mysqlconnexion = mysql.createConnection({
+// Création de la connexion à la bdd
+let db = mysql.createConnection({
     host: configDB['MindGuardians']['HOST'],
     user: configDB['MindGuardians']['USERNAME'],
     password: configDB['MindGuardians']['PASSWORD'],
     database: configDB['MindGuardians']['DATABASE'],
 });
-mysqlconnexion.connect((err) => {
+// Connexion à la bdd
+db.connect((err) => {
     if (!err) {
         if (process.env.SILENT === 'false') {
             console.log('BDD connectée.');
@@ -24,5 +26,7 @@ mysqlconnexion.connect((err) => {
     }
 });
 
-//Exportation du module de connexion à la bdd
-module.exports = mysqlconnexion;
+const query = util.promisify(db.query).bind(db);
+
+// Exportation du module de connexion à la bdd
+module.exports = query;

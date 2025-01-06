@@ -1,8 +1,8 @@
 //___________________________________________________________//
 /////////////////////////-- IMPORTS --/////////////////////////
 // Sentry
-require("./instrument.js");
-const Sentry = require("@sentry/node");
+require('./instrument.js');
+const Sentry = require('@sentry/node');
 // Base imports
 const express = require('express');
 const { createServer } = require('node:http');
@@ -13,6 +13,9 @@ const dotenv = require('dotenv');
 const db = require('./database');
 const bodyParser = require('body-parser');
 const webPush = require('web-push');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 // Routers imports
 const RouterDefault = require('./routes/routeDefault');
@@ -23,6 +26,7 @@ const RouterChat = require('./routes/routeChat');
 const RouterAgenda = require('./routes/routeAgenda');
 const RouterAgendaValidation = require('./routes/routeAgendaValidation');
 const RouterPushNotif = require('./routes/routePushNotif');
+const RouterImage = require('./routes/routeImage');
 
 //___________________________________________________________//
 /////////////////////////-- LOGS SETTINGS --/////////////////////////
@@ -35,7 +39,6 @@ const minimumLog = true;
 dotenv.config();
 
 // Certificates
-var fs = require('fs');
 var https = require('https');
 var privateKey = fs.readFileSync('/etc/apache2/private.key', 'utf8');
 var certificate = fs.readFileSync('/etc/apache2/certificate.crt', 'utf8');
@@ -57,6 +60,28 @@ const io = new Socket.Server(httpsServer, {
         methods: ['GET', 'POST'],
     },
 });
+
+// File upload
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const folder = req.params.folder; // Get folder name from route parameter
+        const uploadPath = path.join('/var/www/MindGuardians/Uploads', folder);
+
+        // Ensure the folder exists
+        fs.mkdir(uploadPath, { recursive: true }, (err) => {
+            if (err) {
+                return cb(err);
+            }
+            cb(null, uploadPath);
+        });
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${file.originalname}`;
+        cb(null, uniqueName);
+    },
+});
+
+const upload = multer({ storage });
 
 // Default uses
 app.use(express.json());
@@ -109,6 +134,22 @@ app.use('/pushNotif', (req, res, next) => {
 });
 app.use('/pushNotif', RouterPushNotif);
 
+app.use('/upload/puzzle', (req, res, next) => {
+    authMiddleware(req, res, next);
+});
+
+app.post('/upload/puzzle', upload.single('puzzle'), (req, res) => {
+    res.sendStatus(200);
+});
+
+app.use('/uploads', express.static(path.join('/var/www/MindGuardians/Uploads')));
+
+app.use('/images', (req, res, next) => {
+    authMiddleware(req, res, next);
+});
+
+app.use('/images', RouterImage);
+
 //_____________________________________________________________//
 /////////////////////////-- UTILITIES --/////////////////////////
 function authMiddleware(req, res, next) {
@@ -119,6 +160,7 @@ function authMiddleware(req, res, next) {
             if (decodedToken) {
                 req.userId = decodedToken.userId;
                 req.newToken = generateJWT(decodedToken.userId);
+                res.token = req.newToken;
                 next();
             } else {
                 if (process.env.SILENT === 'false') {
@@ -203,7 +245,9 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {});
 });
 
-Sentry.setupExpressErrorHandler(app);
+if (process.env.PRODUCTION === 'true') {
+    Sentry.setupExpressErrorHandler(app);
+}
 
 //_________________________________________________________________//
 /////////////////////////-- SERVER START --/////////////////////////
