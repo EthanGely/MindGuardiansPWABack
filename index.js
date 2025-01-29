@@ -16,6 +16,7 @@ const webPush = require('web-push');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const zip = require('adm-zip');
 
 // Routers imports
 const RouterDefault = require('./routes/routeDefault');
@@ -40,6 +41,7 @@ dotenv.config();
 
 // Certificates
 var https = require('https');
+const { log } = require('node:console');
 var privateKey = fs.readFileSync('/etc/apache2/private.key', 'utf8');
 var certificate = fs.readFileSync('/etc/apache2/certificate.crt', 'utf8');
 var credentials = { key: privateKey, cert: certificate };
@@ -142,7 +144,52 @@ app.post('/upload/puzzle', upload.single('puzzle'), (req, res) => {
     res.sendStatus(200);
 });
 
-app.use('/uploads', express.static(path.join('/var/www/MindGuardians/Uploads')));
+app.use('/downloadImage', (req, res, next) => {
+    authMiddleware(req, res, next);
+});
+
+app.post('/downloadImage', (req, res) => {
+    const type = req.body.type;
+
+    console.log('Download image of type :', type);
+
+    if (type === "puzzleDefault") {
+         console.log('Download default images');
+         
+        const defaultImages = ['01.jpg', '02.jpg', '03.jpg'];
+        const zipFile = new zip();
+
+        defaultImages.forEach((image) => {
+            const imagePath = path.join('/var/www/MindGuardians/Uploads/Puzzle/Default', image);
+            zipFile.addLocalFile(imagePath);
+        });
+
+        const zipPath = path.join('/var/www/MindGuardians/Uploads/Puzzle/Default', 'defaultImages.zip');
+        zipFile.writeZip(zipPath);
+
+        res.download(zipPath, 'defaultImages.zip', (err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error downloading zip file' });
+            }
+        });
+        return;
+    }
+
+    const filename = req.body.filename;
+    const filePath = path.join('/var/www/MindGuardians/Uploads', type, '/', filename);
+
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+        if (err) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        res.download(filePath, filename, (err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error downloading file' });
+            }
+        });
+    });
+});
 
 app.use('/images', (req, res, next) => {
     authMiddleware(req, res, next);
@@ -252,6 +299,14 @@ if (process.env.PRODUCTION === 'true') {
 //_________________________________________________________________//
 /////////////////////////-- SERVER START --/////////////////////////
 httpsServer.listen(port, () => {
+    process.on('uncaughtException', (err) => {
+        console.error('Uncaught Exception:', err);
+      });
+      
+      process.on('unhandledRejection', (reason, promise) => {
+        console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      });
+      
     if (process.env.SILENT === 'false') {
         console.log('server running on port :' + port);
     } else if (minimumLog) {
